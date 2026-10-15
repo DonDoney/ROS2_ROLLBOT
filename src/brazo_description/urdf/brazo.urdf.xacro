@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  brazo.urdf.xacro — ARCHIVO PRINCIPAL del robot ROLLBOT
+  ============================================================================
+  Este es el archivo que se "compila" con xacro para obtener el URDF final.
+  Une las piezas:
+      brazo_macro.xacro          -> eslabones y articulaciones
+      brazo.ros2_control.xacro   -> interfaz con ros2_control
+      brazo.gazebo.xacro         -> plugin de Gazebo (solo en modo gazebo)
+
+  Argumentos (se pasan desde los launch o desde la terminal):
+      modo_hardware          mock | gazebo | real       (por defecto: mock)
+      puerto_serie           /dev/ttyUSB0 …             (modo real)
+      baudios                115200 …                   (modo real)
+      archivo_controladores  ruta al YAML de controladores (modo gazebo)
+
+  Para ver el URDF generado en la terminal:
+      xacro $(ros2 pkg prefix brazo_description)/share/brazo_description/urdf/brazo.urdf.xacro
+  Para comprobar que es válido:
+      xacro ...brazo.urdf.xacro > /tmp/brazo.urdf && check_urdf /tmp/brazo.urdf
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="brazo">
+
+  <!-- ===================== Argumentos ===================== -->
+  <xacro:arg name="prefijo"               default=""/>
+  <xacro:arg name="modo_hardware"         default="mock"/>
+  <xacro:arg name="puerto_serie"          default="/dev/ttyUSB0"/>
+  <xacro:arg name="baudios"               default="115200"/>
+  <xacro:arg name="archivo_controladores" default=""/>
+
+  <!-- ===================== Inclusión de las piezas ===================== -->
+  <xacro:include filename="$(find brazo_description)/urdf/brazo_macro.xacro"/>
+  <xacro:include filename="$(find brazo_description)/urdf/brazo.ros2_control.xacro"/>
+  <xacro:include filename="$(find brazo_description)/urdf/brazo.gazebo.xacro"/>
+
+  <!-- ===================== Mundo =====================
+       Eslabón fijo de referencia. Gazebo y MoveIt lo usan como origen global. -->
+  <link name="world"/>
+
+  <!-- ===================== Brazo ===================== -->
+  <xacro:brazo_rollbot prefijo="$(arg prefijo)" padre="world">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:brazo_rollbot>
+
+  <!-- ===================== ros2_control ===================== -->
+  <xacro:brazo_ros2_control
+      prefijo="$(arg prefijo)"
+      modo="$(arg modo_hardware)"
+      puerto_serie="$(arg puerto_serie)"
+      baudios="$(arg baudios)"/>
+
+  <!-- ===================== Gazebo (solo si se simula) ===================== -->
+  <xacro:if value="${'$(arg modo_hardware)' == 'gazebo'}">
+    <xacro:brazo_gazebo prefijo="$(arg prefijo)"
+                        archivo_controladores="$(arg archivo_controladores)"/>
+  </xacro:if>
+
+</robot>

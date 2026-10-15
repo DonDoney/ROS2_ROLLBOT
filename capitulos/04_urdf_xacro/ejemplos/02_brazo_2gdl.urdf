@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  02_brazo_2gdl.urdf — Brazo plano de 2 grados de libertad, en URDF "puro"
+  ============================================================================
+  Novedades respecto al ejemplo 01:
+    - Articulaciones "revolute" (giran con límites)
+    - <axis>  : eje de giro de la articulación
+    - <limit> : ángulos mínimo/máximo (rad), velocidad (rad/s) y esfuerzo (N·m)
+    - <inertial> : masa e inercia (las necesita Gazebo, no RViz)
+
+  Fíjate en lo REPETITIVO que es: los dos eslabones son casi iguales y hay
+  que copiar las medidas a mano en varios sitios. Eso lo arregla xacro
+  (ejemplo 03).
+
+  Visualizar y mover con deslizadores:
+    ros2 launch brazo_description visualizar.launch.py modelo:=$(pwd)/02_brazo_2gdl.urdf
+-->
+<robot name="brazo_2gdl">
+
+  <link name="world"/>
+
+  <!-- ===================== BASE ===================== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.025"/>
+      <geometry><box size="0.2 0.2 0.05"/></geometry>
+      <material name="gris"><color rgba="0.4 0.4 0.4 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.025"/>
+      <geometry><box size="0.2 0.2 0.05"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.025"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.0071" ixy="0" ixz="0" iyy="0.0071" iyz="0" izz="0.0133"/>
+    </inertial>
+  </link>
+
+  <joint name="base_fija" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+
+  <!-- ===================== ESLABÓN 1 ===================== -->
+  <!-- La articulación se coloca en la parte de arriba de la base (z = 0.05) -->
+  <joint name="joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="eslabon_1"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>                                   <!-- gira alrededor de Y -->
+    <limit lower="-1.57" upper="1.57" velocity="1.0" effort="10"/>
+  </joint>
+
+  <link name="eslabon_1">
+    <visual>
+      <!-- Barra de 0.3 m que "crece" hacia arriba desde la articulación -->
+      <origin xyz="0 0 0.15"/>
+      <geometry><box size="0.04 0.04 0.3"/></geometry>
+      <material name="naranja"><color rgba="0.95 0.45 0.1 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.15"/>
+      <geometry><box size="0.04 0.04 0.3"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.15"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.00382" ixy="0" ixz="0" iyy="0.00382" iyz="0" izz="0.00013"/>
+    </inertial>
+  </link>
+
+  <!-- ===================== ESLABÓN 2 ===================== -->
+  <!-- Se coloca en la punta del eslabón 1 (z = 0.3) -->
+  <joint name="joint_2" type="revolute">
+    <parent link="eslabon_1"/>
+    <child link="eslabon_2"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" velocity="1.0" effort="10"/>
+  </joint>
+
+  <link name="eslabon_2">
+    <visual>
+      <origin xyz="0 0 0.125"/>
+      <geometry><box size="0.03 0.03 0.25"/></geometry>
+      <material name="blanco"><color rgba="0.9 0.9 0.9 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.125"/>
+      <geometry><box size="0.03 0.03 0.25"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.125"/>
+      <mass value="0.3"/>
+      <inertia ixx="0.00159" ixy="0" ixz="0" iyy="0.00159" iyz="0" izz="0.000045"/>
+    </inertial>
+  </link>
+
+  <!-- Punta de la herramienta: eslabón vacío para tener un marco de referencia -->
+  <joint name="punta_fija" type="fixed">
+    <parent link="eslabon_2"/>
+    <child link="punta"/>
+    <origin xyz="0 0 0.25"/>
+  </joint>
+  <link name="punta"/>
+
+</robot>

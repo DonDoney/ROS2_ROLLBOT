@@ -1,0 +1,31 @@
+# =============================================================================
+# moveit_controllers.yaml — A qué controlador envía MoveIt las trayectorias
+# =============================================================================
+# MoveIt planifica y luego "ejecuta" mandando la trayectoria a la acción
+#     /brazo_controller/follow_joint_trajectory
+# que ofrece el joint_trajectory_controller de ros2_control
+# (configurado en brazo_bringup/config/brazo_controladores.yaml).
+# =============================================================================
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - brazo_controller
+
+  brazo_controller:
+    type: FollowJointTrajectory      # tipo de acción
+    action_ns: follow_joint_trajectory
+    default: true
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+
+# Opciones de ejecución
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.5   # tiempo extra permitido sobre lo planificado
+  allowed_goal_duration_margin: 1.0         # segundos de margen al final
+  allowed_start_tolerance: 0.02             # rad: diferencia máxima entre estado real e inicio del plan

@@ -1,0 +1,232 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  brazo_macro.xacro — Cadena cinemática del brazo ROLLBOT de 6 GDL
+  ============================================================================
+  Define los ESLABONES (link) y las ARTICULACIONES (joint) del robot dentro
+  de una macro. Usar una macro permite:
+    - instanciar el brazo con un prefijo (p. ej. dos brazos: izq_ y der_)
+    - colgarlo de cualquier eslabón padre (el suelo, una mesa, un carro…)
+
+  Árbol del robot (en posición cero el brazo queda completamente vertical):
+
+    world ─(fija)─ base_link
+                     └─ joint_1 (Z, giro de la torre)      ─ link_1
+                          └─ joint_2 (Y, hombro)           ─ link_2
+                               └─ joint_3 (Y, codo)        ─ link_3
+                                    └─ joint_4 (Z, giro muñeca)   ─ link_4
+                                         └─ joint_5 (Y, cabeceo muñeca) ─ link_5
+                                              └─ joint_6 (Z, brida)    ─ link_6
+                                                   └─ (fija) ─ tool0  (punto de la herramienta)
+
+  Convención: cada eslabón "crece" hacia +Z desde su articulación, y la
+  articulación siguiente se coloca en la punta del eslabón anterior.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find brazo_description)/urdf/brazo_propiedades.xacro"/>
+  <xacro:include filename="$(find brazo_description)/urdf/inercias.xacro"/>
+  <xacro:include filename="$(find brazo_description)/urdf/materiales.xacro"/>
+
+  <!--
+    Macro auxiliar: dibuja un "cubo de motor" (cilindro tumbado en Y) en una
+    articulación. Es solo estético; no afecta a la cinemática.
+  -->
+  <xacro:macro name="carcasa_motor" params="radio largo color">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry><cylinder radius="${radio}" length="${largo}"/></geometry>
+      <material name="${color}"/>
+    </visual>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       MACRO PRINCIPAL
+       prefijo : texto que se antepone a todos los nombres ("" por defecto)
+       padre   : eslabón al que se fija la base del brazo
+       *origen : bloque <origin> con la posición de la base respecto al padre
+       ====================================================================== -->
+  <xacro:macro name="brazo_rollbot" params="prefijo:='' padre *origen">
+
+    <!-- ===================== Unión fija padre -> base ===================== -->
+    <joint name="${prefijo}base_joint" type="fixed">
+      <xacro:insert_block name="origen"/>
+      <parent link="${padre}"/>
+      <child link="${prefijo}base_link"/>
+    </joint>
+
+    <!-- ===================== BASE ===================== -->
+    <link name="${prefijo}base_link">
+      <visual>
+        <origin xyz="0 0 ${base_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${base_radio}" length="${base_altura}"/></geometry>
+        <material name="gris_oscuro"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${base_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${base_radio}" length="${base_altura}"/></geometry>
+      </collision>
+      <xacro:inercia_cilindro masa="${base_masa}" radio="${base_radio}"
+                              altura="${base_altura}" z="${base_altura/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 1: giro de la torre (eje Z) ===================== -->
+    <joint name="${prefijo}joint_1" type="revolute">
+      <parent link="${prefijo}base_link"/>
+      <child  link="${prefijo}link_1"/>
+      <origin xyz="0 0 ${base_altura}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${j1_min}" upper="${j1_max}" velocity="${vel_ejes_grandes}" effort="${esfuerzo_grande}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_1">
+      <visual>
+        <origin xyz="0 0 ${l1_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l1_radio}" length="${l1_altura}"/></geometry>
+        <material name="naranja"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l1_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l1_radio}" length="${l1_altura}"/></geometry>
+      </collision>
+      <xacro:inercia_cilindro masa="${l1_masa}" radio="${l1_radio}"
+                              altura="${l1_altura}" z="${l1_altura/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 2: hombro (eje Y) ===================== -->
+    <joint name="${prefijo}joint_2" type="revolute">
+      <parent link="${prefijo}link_1"/>
+      <child  link="${prefijo}link_2"/>
+      <origin xyz="0 0 ${l1_altura}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${j2_min}" upper="${j2_max}" velocity="${vel_ejes_grandes}" effort="${esfuerzo_grande}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_2">
+      <!-- Carcasa del motor del hombro -->
+      <xacro:carcasa_motor radio="${l2_ancho*0.8}" largo="${l2_ancho*1.6}" color="gris_oscuro"/>
+      <visual>
+        <origin xyz="0 0 ${l2_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l2_ancho} ${l2_ancho} ${l2_largo}"/></geometry>
+        <material name="naranja"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l2_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l2_ancho} ${l2_ancho} ${l2_largo}"/></geometry>
+      </collision>
+      <xacro:inercia_caja masa="${l2_masa}" x="${l2_ancho}" y="${l2_ancho}"
+                          z="${l2_largo}" oz="${l2_largo/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 3: codo (eje Y) ===================== -->
+    <joint name="${prefijo}joint_3" type="revolute">
+      <parent link="${prefijo}link_2"/>
+      <child  link="${prefijo}link_3"/>
+      <origin xyz="0 0 ${l2_largo}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${j3_min}" upper="${j3_max}" velocity="${vel_ejes_grandes}" effort="${esfuerzo_grande}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_3">
+      <xacro:carcasa_motor radio="${l3_ancho*0.8}" largo="${l3_ancho*1.6}" color="gris_oscuro"/>
+      <visual>
+        <origin xyz="0 0 ${l3_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l3_ancho} ${l3_ancho} ${l3_largo}"/></geometry>
+        <material name="gris_claro"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l3_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l3_ancho} ${l3_ancho} ${l3_largo}"/></geometry>
+      </collision>
+      <xacro:inercia_caja masa="${l3_masa}" x="${l3_ancho}" y="${l3_ancho}"
+                          z="${l3_largo}" oz="${l3_largo/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 4: giro de muñeca (eje Z) ===================== -->
+    <joint name="${prefijo}joint_4" type="revolute">
+      <parent link="${prefijo}link_3"/>
+      <child  link="${prefijo}link_4"/>
+      <origin xyz="0 0 ${l3_largo}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${j4_min}" upper="${j4_max}" velocity="${vel_ejes_muneca}" effort="${esfuerzo_muneca}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_4">
+      <visual>
+        <origin xyz="0 0 ${l4_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l4_radio}" length="${l4_altura}"/></geometry>
+        <material name="naranja"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l4_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l4_radio}" length="${l4_altura}"/></geometry>
+      </collision>
+      <xacro:inercia_cilindro masa="${l4_masa}" radio="${l4_radio}"
+                              altura="${l4_altura}" z="${l4_altura/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 5: cabeceo de muñeca (eje Y) ===================== -->
+    <joint name="${prefijo}joint_5" type="revolute">
+      <parent link="${prefijo}link_4"/>
+      <child  link="${prefijo}link_5"/>
+      <origin xyz="0 0 ${l4_altura}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${j5_min}" upper="${j5_max}" velocity="${vel_ejes_muneca}" effort="${esfuerzo_muneca}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_5">
+      <xacro:carcasa_motor radio="${l5_ancho*0.7}" largo="${l5_ancho*1.5}" color="gris_oscuro"/>
+      <visual>
+        <origin xyz="0 0 ${l5_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l5_ancho} ${l5_ancho} ${l5_largo}"/></geometry>
+        <material name="gris_claro"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l5_largo/2}" rpy="0 0 0"/>
+        <geometry><box size="${l5_ancho} ${l5_ancho} ${l5_largo}"/></geometry>
+      </collision>
+      <xacro:inercia_caja masa="${l5_masa}" x="${l5_ancho}" y="${l5_ancho}"
+                          z="${l5_largo}" oz="${l5_largo/2}"/>
+    </link>
+
+    <!-- ===================== JOINT 6: brida (eje Z) ===================== -->
+    <joint name="${prefijo}joint_6" type="revolute">
+      <parent link="${prefijo}link_5"/>
+      <child  link="${prefijo}link_6"/>
+      <origin xyz="0 0 ${l5_largo}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${j6_min}" upper="${j6_max}" velocity="${vel_ejes_muneca}" effort="${esfuerzo_muneca}"/>
+      <dynamics damping="${amortiguamiento}" friction="${rozamiento}"/>
+    </joint>
+
+    <link name="${prefijo}link_6">
+      <visual>
+        <origin xyz="0 0 ${l6_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l6_radio}" length="${l6_altura}"/></geometry>
+        <material name="negro"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${l6_altura/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${l6_radio}" length="${l6_altura}"/></geometry>
+      </collision>
+      <xacro:inercia_cilindro masa="${l6_masa}" radio="${l6_radio}"
+                              altura="${l6_altura}" z="${l6_altura/2}"/>
+    </link>
+
+    <!-- ===================== tool0: punto de trabajo de la herramienta =====================
+         Eslabón sin geometría. Es el que se usa en MoveIt como "punta" del brazo.
+         Si montas una pinza o una herramienta, cuélgala de aquí.            -->
+    <joint name="${prefijo}tool0_joint" type="fixed">
+      <parent link="${prefijo}link_6"/>
+      <child  link="${prefijo}tool0"/>
+      <origin xyz="0 0 ${l6_altura}" rpy="0 0 0"/>
+    </joint>
+    <link name="${prefijo}tool0"/>
+
+  </xacro:macro>
+</robot>

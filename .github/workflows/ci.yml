@@ -1,0 +1,49 @@
+# =============================================================================
+# ci.yml — Integración continua con GitHub Actions
+# =============================================================================
+# En cada push o pull request:
+#   1. Arranca un contenedor oficial con ROS 2 Jazzy (Ubuntu 24.04)
+#   2. Instala las dependencias con rosdep
+#   3. Compila todos los paquetes con colcon
+#   4. Comprueba que el URDF se genera y es válido
+# Si algo falla, GitHub marca el commit en rojo.
+# =============================================================================
+name: Compilar ROS 2 Jazzy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    container:
+      image: ros:jazzy
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y liburdfdom-tools
+          rosdep update
+          rosdep install --from-paths src --ignore-src -r -y
+
+      - name: Compilar
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --event-handlers console_direct+
+
+      - name: Validar URDF (modos mock, gazebo y real)
+        shell: bash
+        run: |
+          source install/setup.bash
+          XACRO=install/brazo_description/share/brazo_description/urdf/brazo.urdf.xacro
+          for modo in mock gazebo real; do
+            xacro $XACRO modo_hardware:=$modo archivo_controladores:=/tmp/c.yaml > /tmp/brazo_$modo.urdf
+            check_urdf /tmp/brazo_$modo.urdf
+          done

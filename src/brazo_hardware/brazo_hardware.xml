@@ -1,0 +1,15 @@
+<!--
+  brazo_hardware.xml — Descripción del plugin para pluginlib.
+  "name" es el texto que se pone en <plugin> dentro de <ros2_control> en el URDF.
+  "type" es la clase C++ que lo implementa.
+-->
+<library path="brazo_hardware">
+  <class name="brazo_hardware/BrazoSystemHardware"
+         type="brazo_hardware::BrazoSystemHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Interfaz de hardware del brazo ROLLBOT: envía posiciones en pasos a un
+      microcontrolador (ESP32) que genera STEP/DIR para drivers de bucle cerrado.
+    </description>
+  </class>
+</library>

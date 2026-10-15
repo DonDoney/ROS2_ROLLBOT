@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!--
+  package.xml — brazo_hardware
+  Plugin C++ de ros2_control que comunica ROS 2 con el microcontrolador de
+  los motores paso a paso por puerto serie.
+-->
+<package format="3">
+  <name>brazo_hardware</name>
+  <version>0.1.0</version>
+  <description>Interfaz ros2_control para el brazo ROLLBOT con motores paso a paso de bucle cerrado.</description>
+  <maintainer email="dondoney@users.noreply.github.com">DonDoney</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <!-- Para el script de pruebas probar_serie.py -->
+  <exec_depend>python3-serial</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

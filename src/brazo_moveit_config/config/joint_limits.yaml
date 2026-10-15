@@ -1,0 +1,46 @@
+# =============================================================================
+# joint_limits.yaml — Límites de velocidad y aceleración para MoveIt
+# =============================================================================
+# El URDF solo tiene límites de posición y velocidad. MoveIt necesita también
+# la ACELERACIÓN para generar trayectorias suaves (perfil temporal).
+# Con motores paso a paso grandes conviene empezar con aceleraciones bajas:
+# un NEMA 34 con carga pierde pasos (o salta la alarma del driver de bucle
+# cerrado) si se le pide más de lo que puede dar.
+#
+# Los factores de escala reducen la velocidad por defecto al 10 %: ideal para
+# las primeras pruebas con el robot real. Súbelos cuando confíes en el sistema.
+# =============================================================================
+default_velocity_scaling_factor: 0.1
+default_acceleration_scaling_factor: 0.1
+
+joint_limits:
+  joint_1:
+    has_velocity_limits: true
+    max_velocity: 1.0          # rad/s
+    has_acceleration_limits: true
+    max_acceleration: 1.5      # rad/s²
+  joint_2:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.5
+  joint_3:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.5
+  joint_4:
+    has_velocity_limits: true
+    max_velocity: 1.5
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  joint_5:
+    has_velocity_limits: true
+    max_velocity: 1.5
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  joint_6:
+    has_velocity_limits: true
+    max_velocity: 1.5
+    has_acceleration_limits: true
+    max_acceleration: 3.0

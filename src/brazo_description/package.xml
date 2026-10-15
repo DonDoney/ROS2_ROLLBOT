@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!--
+  package.xml — Manifiesto del paquete brazo_description.
+  Declara el nombre, la versión y las dependencias del paquete.
+  rosdep lee este archivo para instalar automáticamente lo que falte
+  (comando "rosdep install" del capítulo 02).
+-->
+<package format="3">
+  <name>brazo_description</name>
+  <version>0.1.0</version>
+  <description>
+    Descripción del brazo robótico ROLLBOT de 6 GDL: modelo URDF/Xacro,
+    configuración de ros2_control, etiquetas de Gazebo y archivos de RViz.
+  </description>
+  <maintainer email="dondoney@users.noreply.github.com">DonDoney</maintainer>
+  <license>MIT</license>
+
+  <!-- Herramienta de compilación: ament_cmake (paquete sin código C++ propio) -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Dependencias necesarias en tiempo de ejecución -->
+  <exec_depend>xacro</exec_depend>                     <!-- Procesa los archivos .xacro -->
+  <exec_depend>robot_state_publisher</exec_depend>     <!-- Publica las TF a partir del URDF -->
+  <exec_depend>joint_state_publisher</exec_depend>     <!-- Publica /joint_states sin interfaz -->
+  <exec_depend>joint_state_publisher_gui</exec_depend> <!-- Deslizadores para mover articulaciones -->
+  <exec_depend>rviz2</exec_depend>                     <!-- Visualizador 3D -->
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

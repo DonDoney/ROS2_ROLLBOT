@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  brazo.srdf — Descripción SEMÁNTICA del robot para MoveIt 2
+  ============================================================================
+  El URDF dice CÓMO es el robot; el SRDF dice CÓMO USARLO:
+    - group               : conjunto de articulaciones que se planifican juntas
+    - group_state         : posiciones con nombre ("home", "listo"…)
+    - disable_collisions  : pares de eslabones que nunca pueden chocar (o que
+                            siempre se tocan) y que MoveIt no debe comprobar.
+                            Quitar pares innecesarios acelera la planificación.
+
+  Este archivo lo genera normalmente el MoveIt Setup Assistant. Aquí está
+  escrito a mano y comentado; si cambias mucho la geometría, regenera la
+  matriz de colisiones con el asistente (ver capítulo 09).
+-->
+<robot name="brazo">
+
+  <!-- ===================== GRUPO DE PLANIFICACIÓN =====================
+       Cadena desde base_link hasta tool0: incluye joint_1 ... joint_6 -->
+  <group name="brazo">
+    <chain base_link="base_link" tip_link="tool0"/>
+  </group>
+
+  <!-- ===================== POSICIONES CON NOMBRE (en radianes) ===================== -->
+  <!-- Brazo totalmente vertical: la posición cero del modelo -->
+  <group_state name="home" group="brazo">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="0"/>
+    <joint name="joint_3" value="0"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="0"/>
+    <joint name="joint_6" value="0"/>
+  </group_state>
+
+  <!-- Postura de trabajo: brazo inclinado hacia delante y herramienta mirando abajo -->
+  <group_state name="listo" group="brazo">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="0.4"/>
+    <joint name="joint_3" value="1.3"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="1.2"/>
+    <joint name="joint_6" value="0"/>
+  </group_state>
+
+  <!-- Postura de transporte: plegado y compacto -->
+  <group_state name="plegado" group="brazo">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="-0.6"/>
+    <joint name="joint_3" value="2.2"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="0.8"/>
+    <joint name="joint_6" value="0"/>
+  </group_state>
+
+  <!-- ===================== COLISIONES DESACTIVADAS =====================
+       Eslabones contiguos: siempre se tocan en la articulación que los une. -->
+  <disable_collisions link1="base_link" link2="link_1" reason="Adjacent"/>
+  <disable_collisions link1="link_1"    link2="link_2" reason="Adjacent"/>
+  <disable_collisions link1="link_2"    link2="link_3" reason="Adjacent"/>
+  <disable_collisions link1="link_3"    link2="link_4" reason="Adjacent"/>
+  <disable_collisions link1="link_4"    link2="link_5" reason="Adjacent"/>
+  <disable_collisions link1="link_5"    link2="link_6" reason="Adjacent"/>
+
+  <!-- Pares que por geometría nunca llegan a tocarse -->
+  <disable_collisions link1="base_link" link2="link_2" reason="Never"/>
+  <disable_collisions link1="link_1"    link2="link_3" reason="Never"/>
+
+</robot>

@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  03_brazo_2gdl.urdf.xacro — El MISMO brazo del ejemplo 02, ahora con xacro
+  ============================================================================
+  xacro (XML Macros) añade al URDF:
+    - <xacro:property>  : variables          -> ${largo_1}
+    - ${ ... }          : expresiones        -> ${largo_1 / 2}, ${pi / 2}
+    - <xacro:macro>     : "funciones" que generan bloques XML repetidos
+    - <xacro:arg>       : argumentos que se pasan desde fuera
+    - <xacro:if>        : bloques condicionales
+    - <xacro:include>   : partir el modelo en varios archivos
+
+  Prueba a cambiar largo_1 o el argumento "color_brazo" y vuelve a lanzar.
+
+  Ver el URDF que genera:
+    xacro 03_brazo_2gdl.urdf.xacro
+  Pasarle un argumento:
+    xacro 03_brazo_2gdl.urdf.xacro color_brazo:=azul
+  Visualizar:
+    ros2 launch brazo_description visualizar.launch.py modelo:=$(pwd)/03_brazo_2gdl.urdf.xacro
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="brazo_2gdl_xacro">
+
+  <!-- ===================== Argumento ===================== -->
+  <xacro:arg name="color_brazo" default="naranja"/>
+
+  <!-- ===================== Propiedades (variables) ===================== -->
+  <xacro:property name="largo_1" value="0.30"/>
+  <xacro:property name="largo_2" value="0.25"/>
+  <xacro:property name="ancho"   value="0.04"/>
+  <xacro:property name="masa_por_metro" value="1.6"/>  <!-- kg/m -->
+
+  <!-- Colores -->
+  <material name="gris">   <color rgba="0.4 0.4 0.4 1"/></material>
+  <material name="naranja"><color rgba="0.95 0.45 0.1 1"/></material>
+  <material name="azul">   <color rgba="0.1 0.4 0.9 1"/></material>
+
+  <!-- ===================== Macro de un eslabón tipo barra =====================
+       Genera visual + collision + inertial para una barra de longitud "largo".
+       La inercia de una caja (barra) se calcula con su fórmula: ¡ya no a mano! -->
+  <xacro:macro name="barra" params="nombre largo color">
+    <xacro:property name="m" value="${masa_por_metro * largo}"/>
+    <link name="${nombre}">
+      <visual>
+        <origin xyz="0 0 ${largo/2}"/>
+        <geometry><box size="${ancho} ${ancho} ${largo}"/></geometry>
+        <material name="${color}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${largo/2}"/>
+        <geometry><box size="${ancho} ${ancho} ${largo}"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 ${largo/2}"/>
+        <mass value="${m}"/>
+        <inertia ixx="${m*(ancho*ancho + largo*largo)/12}" ixy="0" ixz="0"
+                 iyy="${m*(ancho*ancho + largo*largo)/12}" iyz="0"
+                 izz="${m*(2*ancho*ancho)/12}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <!-- ===================== Macro de una articulación rotativa en Y ===================== -->
+  <xacro:macro name="bisagra" params="nombre padre hijo z limite">
+    <joint name="${nombre}" type="revolute">
+      <parent link="${padre}"/>
+      <child link="${hijo}"/>
+      <origin xyz="0 0 ${z}"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${-limite}" upper="${limite}" velocity="1.0" effort="10"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ===================== El robot, montado con las macros ===================== -->
+  <link name="world"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.025"/>
+      <geometry><box size="0.2 0.2 0.05"/></geometry>
+      <material name="gris"/>
+    </visual>
+  </link>
+  <joint name="base_fija" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+
+  <xacro:bisagra nombre="joint_1" padre="base_link" hijo="eslabon_1" z="0.05"      limite="${pi/2}"/>
+  <xacro:barra   nombre="eslabon_1" largo="${largo_1}" color="$(arg color_brazo)"/>
+
+  <xacro:bisagra nombre="joint_2" padre="eslabon_1" hijo="eslabon_2" z="${largo_1}" limite="${0.8*pi}"/>
+  <xacro:barra   nombre="eslabon_2" largo="${largo_2}" color="gris"/>
+
+  <!-- Ejemplo de condicional: la punta solo existe si el brazo es largo -->
+  <xacro:if value="${largo_2 > 0.1}">
+    <joint name="punta_fija" type="fixed">
+      <parent link="eslabon_2"/>
+      <child link="punta"/>
+      <origin xyz="0 0 ${largo_2}"/>
+    </joint>
+    <link name="punta"/>
+  </xacro:if>
+
+</robot>

@@ -1,0 +1,67 @@
+# =============================================================================
+# brazo_controladores.yaml — Configuración de ros2_control
+# =============================================================================
+# El controller_manager es el "director de orquesta": carga los controladores
+# y cada ciclo (update_rate veces por segundo) hace:
+#     read()  -> lee el estado del hardware (posición de cada articulación)
+#     update()-> cada controlador calcula el nuevo comando
+#     write() -> envía los comandos al hardware
+#
+# Este mismo archivo lo usan los modos mock, gazebo y real.
+# =============================================================================
+
+controller_manager:
+  ros__parameters:
+    # Frecuencia del bucle de control en Hz.
+    # 100 Hz va bien en simulación. Con el micro por puerto serie a 115200
+    # baudios también da tiempo (cada mensaje ocupa ~60 bytes).
+    update_rate: 100
+
+    # Publica /joint_states a partir de las state_interfaces del hardware
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Sigue trayectorias articulares (es el que usa MoveIt)
+    brazo_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+# -----------------------------------------------------------------------------
+# Parámetros del controlador de trayectorias
+# -----------------------------------------------------------------------------
+brazo_controller:
+  ros__parameters:
+    # Articulaciones que controla (deben coincidir con el URDF)
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+
+    # Qué escribe el controlador: solo posición (los drivers de bucle cerrado
+    # reciben pulsos STEP/DIR, que es control en posición).
+    command_interfaces:
+      - position
+
+    # Qué lee del hardware
+    state_interfaces:
+      - position
+      - velocity
+
+    # Permite mandar trayectorias que solo incluyan algunas articulaciones
+    allow_partial_joints_goal: false
+
+    # Frecuencia con la que se comprueba el progreso de la acción
+    action_monitor_rate: 20.0
+
+    # Tolerancias: si el robot se desvía más de esto, la trayectoria se aborta.
+    constraints:
+      stopped_velocity_tolerance: 0.05   # rad/s para considerar el robot parado
+      goal_time: 1.0                     # s extra permitidos para llegar al final
+      joint_1: { trajectory: 0.2, goal: 0.02 }
+      joint_2: { trajectory: 0.2, goal: 0.02 }
+      joint_3: { trajectory: 0.2, goal: 0.02 }
+      joint_4: { trajectory: 0.2, goal: 0.02 }
+      joint_5: { trajectory: 0.2, goal: 0.02 }
+      joint_6: { trajectory: 0.2, goal: 0.02 }

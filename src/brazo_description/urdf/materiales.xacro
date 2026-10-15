@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!--
+  materiales.xacro — Colores que usa RViz para pintar cada eslabón.
+  (Gazebo usa sus propios materiales; ver brazo.gazebo.xacro)
+  Formato rgba: rojo verde azul transparencia, valores de 0 a 1.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <material name="gris_oscuro"><color rgba="0.20 0.20 0.22 1.0"/></material>
+  <material name="naranja">    <color rgba="0.95 0.45 0.10 1.0"/></material>
+  <material name="gris_claro"> <color rgba="0.75 0.75 0.78 1.0"/></material>
+  <material name="negro">      <color rgba="0.05 0.05 0.05 1.0"/></material>
+</robot>

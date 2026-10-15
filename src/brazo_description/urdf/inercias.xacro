@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  inercias.xacro — Macros para calcular el tensor de inercia de formas simples
+  ============================================================================
+  Gazebo (y cualquier simulador físico) necesita la masa y la inercia de cada
+  eslabón. Calcularla a mano es tedioso, así que usamos macros con las
+  fórmulas clásicas de un cilindro macizo y de una caja maciza.
+
+  Uso:
+    <xacro:inercia_cilindro masa="2.0" radio="0.05" altura="0.2" z="0.1"/>
+    <xacro:inercia_caja     masa="1.0" x="0.05" y="0.05" z="0.3" oz="0.15"/>
+
+  El parámetro z/oz desplaza el centro de masas a lo largo del eje Z del
+  eslabón (nuestros eslabones crecen hacia +Z desde su articulación).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Cilindro macizo con el eje de simetría en Z -->
+  <xacro:macro name="inercia_cilindro" params="masa radio altura z:=0">
+    <inertial>
+      <origin xyz="0 0 ${z}" rpy="0 0 0"/>
+      <mass value="${masa}"/>
+      <inertia
+        ixx="${masa * (3 * radio * radio + altura * altura) / 12.0}" ixy="0" ixz="0"
+        iyy="${masa * (3 * radio * radio + altura * altura) / 12.0}" iyz="0"
+        izz="${masa * radio * radio / 2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Caja maciza de lados x, y, z -->
+  <xacro:macro name="inercia_caja" params="masa x y z oz:=0">
+    <inertial>
+      <origin xyz="0 0 ${oz}" rpy="0 0 0"/>
+      <mass value="${masa}"/>
+      <inertia
+        ixx="${masa * (y * y + z * z) / 12.0}" ixy="0" ixz="0"
+        iyy="${masa * (x * x + z * z) / 12.0}" iyz="0"
+        izz="${masa * (x * x + y * y) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+</robot>

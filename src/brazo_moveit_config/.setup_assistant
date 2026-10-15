@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: brazo_description
+    relative_path: urdf/brazo.urdf.xacro
+    xacro_args: ""
+  srdf:
+    relative_path: config/brazo.srdf
+  package_settings:
+    author_name: DonDoney
+    author_email: dondoney@users.noreply.github.com
+    generated_timestamp: 1760544000

@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  brazo_propiedades.xacro — Medidas, masas y límites del brazo (UN SOLO SITIO)
+  ============================================================================
+  Todas las cifras del robot están aquí para que puedas ajustarlas sin tocar
+  la estructura del modelo. Unidades del sistema internacional:
+    - longitudes en metros (m)
+    - masas en kilogramos (kg)
+    - ángulos en radianes (rad)   -> 1 rad = 57.3 grados
+    - velocidades en rad/s, esfuerzos en N·m
+
+  Cuando tengas el brazo real, cambia estos valores por los de tu diseño CAD.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constante PI ya viene definida en xacro como ${pi}. -->
+
+  <!-- ===================== BASE (fija al suelo) ===================== -->
+  <xacro:property name="base_radio"   value="0.08"/>
+  <xacro:property name="base_altura"  value="0.05"/>
+  <xacro:property name="base_masa"    value="3.0"/>
+
+  <!-- ===================== ESLABÓN 1: torre giratoria (eje Z) ===================== -->
+  <xacro:property name="l1_radio"     value="0.06"/>
+  <xacro:property name="l1_altura"    value="0.15"/>
+  <xacro:property name="l1_masa"      value="2.0"/>
+
+  <!-- ===================== ESLABÓN 2: brazo (hombro, eje Y) ===================== -->
+  <xacro:property name="l2_ancho"     value="0.06"/>
+  <xacro:property name="l2_largo"     value="0.35"/>
+  <xacro:property name="l2_masa"      value="2.5"/>
+
+  <!-- ===================== ESLABÓN 3: antebrazo (codo, eje Y) ===================== -->
+  <xacro:property name="l3_ancho"     value="0.05"/>
+  <xacro:property name="l3_largo"     value="0.30"/>
+  <xacro:property name="l3_masa"      value="1.5"/>
+
+  <!-- ===================== ESLABÓN 4: giro de muñeca (eje Z) ===================== -->
+  <xacro:property name="l4_radio"     value="0.035"/>
+  <xacro:property name="l4_altura"    value="0.10"/>
+  <xacro:property name="l4_masa"      value="0.6"/>
+
+  <!-- ===================== ESLABÓN 5: cabeceo de muñeca (eje Y) ===================== -->
+  <xacro:property name="l5_ancho"     value="0.045"/>
+  <xacro:property name="l5_largo"     value="0.08"/>
+  <xacro:property name="l5_masa"      value="0.4"/>
+
+  <!-- ===================== ESLABÓN 6: brida de herramienta (eje Z) ===================== -->
+  <xacro:property name="l6_radio"     value="0.03"/>
+  <xacro:property name="l6_altura"    value="0.02"/>
+  <xacro:property name="l6_masa"      value="0.2"/>
+
+  <!-- ===================== LÍMITES DE LAS ARTICULACIONES =====================
+       inferior / superior en rad, velocidad en rad/s, esfuerzo en N·m.
+       Ajusta las velocidades a lo que realmente den tus NEMA 23/34 con su
+       reductora: velocidad_articulación = rpm_motor / reducción * 2π / 60   -->
+  <xacro:property name="j1_min" value="${-170 * pi / 180}"/>
+  <xacro:property name="j1_max" value="${ 170 * pi / 180}"/>
+  <xacro:property name="j2_min" value="${ -90 * pi / 180}"/>
+  <xacro:property name="j2_max" value="${  90 * pi / 180}"/>
+  <xacro:property name="j3_min" value="${-135 * pi / 180}"/>
+  <xacro:property name="j3_max" value="${ 135 * pi / 180}"/>
+  <xacro:property name="j4_min" value="${-170 * pi / 180}"/>
+  <xacro:property name="j4_max" value="${ 170 * pi / 180}"/>
+  <xacro:property name="j5_min" value="${-115 * pi / 180}"/>
+  <xacro:property name="j5_max" value="${ 115 * pi / 180}"/>
+  <xacro:property name="j6_min" value="${-pi}"/>
+  <xacro:property name="j6_max" value="${ pi}"/>
+
+  <xacro:property name="vel_ejes_grandes"   value="1.0"/>   <!-- j1, j2, j3 (NEMA 34 / 23 con reductora) -->
+  <xacro:property name="vel_ejes_muneca"    value="1.5"/>   <!-- j4, j5, j6 -->
+  <xacro:property name="esfuerzo_grande"    value="80.0"/>
+  <xacro:property name="esfuerzo_muneca"    value="15.0"/>
+
+  <!-- Amortiguamiento y rozamiento (solo afectan a la simulación en Gazebo) -->
+  <xacro:property name="amortiguamiento" value="0.5"/>
+  <xacro:property name="rozamiento"      value="0.1"/>
+
+</robot>

@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<!--
+  ============================================================================
+  brazo.ros2_control.xacro — Conexión entre el modelo y ros2_control
+  ============================================================================
+  La etiqueta <ros2_control> le dice al controller_manager:
+    1) Qué "hardware" mueve el robot (un plugin).
+    2) Qué articulaciones existen y qué interfaces ofrece cada una:
+         - command_interface : lo que el controlador ESCRIBE (posición deseada)
+         - state_interface   : lo que el controlador LEE (posición y velocidad)
+
+  El mismo modelo sirve para tres modos, elegidos con el argumento
+  "modo_hardware" al procesar el xacro:
+
+    mock    -> mock_components/GenericSystem: "hardware falso" que copia el
+               comando al estado. Ideal para probar MoveIt sin nada conectado.
+    gazebo  -> gz_ros2_control/GazeboSimSystem: las articulaciones las mueve
+               el simulador Gazebo Harmonic.
+    real    -> brazo_hardware/BrazoSystemHardware: nuestro plugin C++ que habla
+               por puerto serie con el microcontrolador de los motores paso a paso.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--
+    Macro de UNA articulación. Los parámetros pasos_por_vuelta, reduccion y
+    sentido solo los usa el modo "real" para convertir radianes <-> pasos:
+
+       pasos_por_radian = pasos_por_vuelta * reduccion / (2 * pi)
+
+    pasos_por_vuelta : pulsos por vuelta configurados en el driver (DIP switches
+                       del HBS860H u otro driver de bucle cerrado, p. ej. 1600, 3200…)
+    reduccion        : relación de la reductora (p. ej. 20 para una 20:1)
+    sentido          : 1 o -1 para invertir el giro sin recablear el motor
+  -->
+  <xacro:macro name="articulacion_ros2_control"
+               params="nombre posicion_inicial:=0.0 pasos_por_vuelta:=3200 reduccion:=1.0 sentido:=1">
+    <joint name="${nombre}">
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">${posicion_inicial}</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <param name="pasos_por_vuelta">${pasos_por_vuelta}</param>
+      <param name="reduccion">${reduccion}</param>
+      <param name="sentido">${sentido}</param>
+    </joint>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       MACRO PRINCIPAL
+       modo          : mock | gazebo | real
+       puerto_serie  : dispositivo del microcontrolador (solo modo real)
+       baudios       : velocidad del puerto serie (solo modo real)
+       ====================================================================== -->
+  <xacro:macro name="brazo_ros2_control"
+               params="prefijo:='' modo:=mock puerto_serie:=/dev/ttyUSB0 baudios:=115200">
+
+    <ros2_control name="BrazoSystem" type="system">
+      <hardware>
+        <xacro:if value="${modo == 'mock'}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <!-- Calcula la velocidad derivando la posición, para que /joint_states sea realista -->
+          <param name="calculate_dynamics">true</param>
+        </xacro:if>
+
+        <xacro:if value="${modo == 'gazebo'}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+
+        <xacro:if value="${modo == 'real'}">
+          <plugin>brazo_hardware/BrazoSystemHardware</plugin>
+          <param name="puerto_serie">${puerto_serie}</param>
+          <param name="baudios">${baudios}</param>
+          <!-- Milisegundos máximos sin respuesta del micro antes de dar error -->
+          <param name="timeout_ms">500</param>
+          <!-- Si es true, al activar el hardware se manda la orden de homing (finales de carrera) -->
+          <param name="homing_al_activar">true</param>
+          <!-- Segundos máximos que puede durar el homing -->
+          <param name="timeout_homing_s">120</param>
+        </xacro:if>
+      </hardware>
+
+      <!--
+        Ajusta pasos_por_vuelta y reduccion a tu mecánica real.
+        Ejemplo de partida: NEMA 34 + reductora 20:1 en j1-j2, NEMA 23 + 15:1 en j3,
+        NEMA 23 + 10:1 en la muñeca; drivers a 3200 pulsos/vuelta.
+      -->
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_1" pasos_por_vuelta="3200" reduccion="20.0"/>
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_2" pasos_por_vuelta="3200" reduccion="20.0"/>
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_3" pasos_por_vuelta="3200" reduccion="15.0"/>
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_4" pasos_por_vuelta="3200" reduccion="10.0"/>
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_5" pasos_por_vuelta="3200" reduccion="10.0"/>
+      <xacro:articulacion_ros2_control nombre="${prefijo}joint_6" pasos_por_vuelta="3200" reduccion="10.0"/>
+    </ros2_control>
+
+  </xacro:macro>
+</robot>
